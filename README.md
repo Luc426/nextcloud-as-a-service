@@ -16,7 +16,8 @@ Deploy a functional and secure Nextcloud collaborative server on Kubernetes with
 
 - UID and GID of the web user must be consistent for nginx and PHP containers and align with NFS folder permissions.
 
-Configuration Variables
+
+# Configuration Variables
 
 - ConfigMap: 
 PHP_SERVICE:PHP_PORT, 
