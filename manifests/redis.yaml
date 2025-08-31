@@ -1,0 +1,60 @@
+# ================================================
+# Kubernetes Manifest for Redis
+# Author   : Lumitek
+# Date     : 2025-08-15
+# Description:
+#   This manifest contains the following configurations:
+#   - Service for the Redis pod
+#   - Redis deployment
+# ================================================
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${REDIS_SERVICE}
+spec:
+  selector:
+    app: cloud
+    tier: redis
+  ports:
+    - port: 6379
+      targetPort: ${REDIS_PORT}
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cloud
+    tier: redis
+  name: ${REDIS_DEPLOYMENT}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloud
+      tier: redis
+  template:
+    metadata:
+      labels:
+        app: cloud
+        tier: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:alpine
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysecrets
+              key: REDIS_PASSWORD
+        ports:
+        - containerPort: ${REDIS_PORT}
+        command: ["/bin/sh"]
+        args: ["-c", "redis-server - requirepass $REDIS_PASSWORD"]
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      imagePullSecrets:
+      - name: ${REGISTRY_CREDENTIALS}
+---

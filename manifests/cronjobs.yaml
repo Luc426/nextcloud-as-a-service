@@ -1,0 +1,59 @@
+# ================================================
+# Kubernetes Manifest for the CronJob
+# Author   : Lumitek
+# Date     : 2025-08-15
+# Description :
+#   The recommended CronJob for Nextcloud
+# ================================================
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cron
+spec:
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          volumes:
+          - name: php
+            configMap:
+              name: php-config
+          - name: web
+            persistentVolumeClaim:
+              claimName: webpvc
+          - name: data
+            persistentVolumeClaim:
+              claimName: datapvc
+          containers:
+          - name: cron
+            image: ${PHP-FPM_IMAGE}
+            envFrom:
+            - secretRef:
+                name: ${MY SECRETS}
+            securityContext: 
+              runAsUser: ${NGINX_USER}
+              runAsGroup: ${NGINX_USER}
+            imagePullPolicy: IfNotPresent
+            command:
+            - /usr/local/bin/php
+            - /usr/share/nginx/html/cron.php
+            volumeMounts:
+            - name: web
+              mountPath: "/usr/share/nginx/html"
+            - name: data 
+              mountPath: "/mnt"
+            - name: php
+              mountPath: /usr/local/etc/php/conf.d/nextcloud.ini 
+              subPath: nextcloud.ini
+            - name: php
+              mountPath: /usr/local/etc/php-fpm.d/www.conf
+              subPath: www.conf
+          dnsPolicy: ClusterFirst
+          restartPolicy: OnFailure
+          imagePullSecrets:
+          - name: ${REGISTRY_CREDENTIALS}
+---

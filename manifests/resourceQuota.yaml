@@ -1,0 +1,41 @@
+# ================================================
+# Kubernetes Manifest for Resources Quota
+# Author   : Lumitek
+# Date     : 2025-08-15
+# Description:
+#   This manifest contains the following configurations:
+#   - LimitRange for the containers default configuration
+#   - ResourceQuota fot the whole namespace
+# ================================================
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-limits
+  namespace: cloud
+spec:
+  limits:
+  - type: Container
+    default:
+      cpu: "0.5"
+      memory: "512Mi"
+    defaultRequest:
+      cpu: "0.25"
+      memory: "100Mi"
+    max:
+      cpu: "2"
+      memory: "2.5Gi"
+    min:
+      cpu: "0.1"
+      memory: "30Mi"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: cloud-quota
+  namespace: cloud
+spec:
+  hard:
+    requests.cpu: "???"
+    requests.memory: "???Gi"
+---

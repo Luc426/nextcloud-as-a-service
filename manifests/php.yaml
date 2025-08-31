@@ -1,0 +1,90 @@
+# ================================================
+# Kubernetes Manifest for PHP
+# Author   : Lumitek
+# Date     : 2025-08-15
+# Description:
+#   This manifest contains the following configurations:
+#   - Service for PHP-FPM
+#   - The PHP-FPM deployment with specific resources quota for each containers
+# ================================================
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${PHP_SERVICE}
+spec:
+  type: ClusterIP
+  selector:
+    app: cloud
+    tier: backend
+  ports:
+    - port: 9000
+      targetPort: ${PHP_PORT}
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cloud
+    tier: backend
+  name: ${PHP_DEPLOYMENT}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cloud
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: cloud
+        tier: backend
+    spec:
+      volumes:
+      - name: php
+        configMap:
+          name: php-config
+      - name: web
+        persistentVolumeClaim:
+          claimName: ${WEBPVC}
+      - name: data
+        persistentVolumeClaim:
+          claimName: ${DATAPVC}
+      containers:
+      - name: php
+        image: ${PHP-FPM_IMAGE}
+        envFrom:
+          - secretRef:
+              name: ${MY SECRETS}
+        securityContext:
+          runAsUser: ${NGINX_USER}
+          runAsGroup: ${NGINX_USER}
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: "1.5"
+            memory: "2.5Gi"
+          requests:
+            cpu: "0.5"
+            memory: "300Mi"
+        ports:
+        - containerPort: ${PHP_PORT}
+        volumeMounts:
+        - name: web
+          mountPath: "/usr/share/nginx/html"
+        - name: data
+          mountPath: "/mnt"
+        - name: php
+          mountPath: /usr/local/etc/php/conf.d/nextcloud.ini
+          subPath: nextcloud.ini
+          readOnly: true
+        - name: php
+          mountPath: /usr/local/etc/php-fpm.d/www.conf
+          subPath: www.conf
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      imagePullSecrets:
+      - name: ${REGISTRY_CREDENTIALS}
+---

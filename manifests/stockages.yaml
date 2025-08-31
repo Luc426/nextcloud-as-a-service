@@ -1,0 +1,85 @@
+# ================================================
+# Kubernetes Manifest for Nextcloud Storage
+# Author   : Lumitek
+# Date     : 2025-08-15
+# Description:
+#   This manifest contains the following configurations:
+#   - PersistentVolume for websites, user data, and the database
+#   - PersistentVolumeClaim for websites and user data
+#   - Since the database is a StatefulSet, a PVC is created automatically
+# ================================================
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: webpv
+  labels:
+    storage: website
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: ${NFS_SERVER}
+    path: ${NFS_SERVER_WORKDIR}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: datapv
+  labels:
+    storage: data
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: ${NFS_SERVER}
+    path: ${NFS_SERVER_WORKDIR}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mariadbpv
+  labels:
+    app: cloud
+    tier: database
+spec:
+  capacity:
+    storage: 550M
+  accessModes:
+    - ReadWriteOnce
+  nfs:
+    server: ${NFS_SERVER}
+    path: ${NFS_SERVER_WORKDIR}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${WEBPVC}
+spec:
+  selector:
+    matchLabels:
+      storage: website
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${DATAPVC}
+spec:
+  selector:
+    matchLabels:
+      storage: data
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
